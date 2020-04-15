@@ -14,4 +14,4 @@ config
 +-- yolov3.weights
 ```
 
-Run `python app.py` to try it out on a video file.
+Edit and run `python app.py` to try it out on a video file.
