@@ -76,20 +76,25 @@ class PeoplePathing():
                 self.conf_thres, self.nms_thres)
         return detections[0]
 
-    def get_paths(self, video_file_name, show_detection=False):
+    def get_paths(self, video_file_name, num_frames,
+                  show_detection=False, silent=False):
         '''Gets paths of objects in video'''
 
         cmap = plt.get_cmap('tab20b')
         colors = [cmap(i)[:3] for i in np.linspace(0, 1, 20)]
 
         vid = cv2.VideoCapture(video_file_name)
-        num_frames = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
+        if num_frames:
+            num_frames = min(int(vid.get(cv2.CAP_PROP_FRAME_COUNT)), num_frames)
+        else:
+            num_frames = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
         mot_tracker = Sort()
 
         object_paths = {}
 
         for frame_idx in range(num_frames):
-            print('Processing frame: ' + str(frame_idx))
+            if not silent:
+                print('Processing frame: ' + str(frame_idx))
 
             _, frame = vid.read()
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
