@@ -6,7 +6,7 @@ Author: Rishi Masand 2020
 Adapted from the following resource
 Title: Object Detection and Tracking
 Author: Chris Fotache
-Link: https://towardsdatascience.com/object-detection-and-tracking-in-pytorch-b3cf1a696a98) # pylint: disable=line-too-long
+Link: https://towardsdatascience.com/object-detection-and-tracking-in-pytorch-b3cf1a696a98)
 '''
 
 import warnings
