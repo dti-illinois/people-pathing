@@ -91,7 +91,8 @@ class PeoplePathing():
         mot_tracker = Sort()
 
         object_paths = {}
-
+        if not silent:
+            print('Processing ' + str(num_frames) + ' frames.')
         for frame_idx in range(num_frames):
             if not silent:
                 print('Processing frame: ' + str(frame_idx))
