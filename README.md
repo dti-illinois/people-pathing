@@ -61,4 +61,4 @@ Command: `python app.py data/videos/people_walking_mall.mp4 data/images/frame_1.
 
 ## Resources
 
-[Object detection and tracking in PyTorch](https://towardsdatascience.com/object-detection-and-tracking-in-pytorch-b3cf1a696a98)
+[Object detection and tracking in PyTorch](https://towardsdatascience.com/object-detection-and-tracking-in-pytorch-b3cf1a696a98) by Chris Fotache
