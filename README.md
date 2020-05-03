@@ -56,7 +56,7 @@ Command: `python app.py data/videos/people_walking_mall.mp4 -n=300 -s -d`
 Command: `python app.py data/videos/people_walking_mall.mp4 data/images/frame_1.jpg -n=300 -s -d`
 
 <p float="left" align="center">
-  <img src="readme_assets/paths_plot_overlayed.png" width="600" height="400"/>
+  <img src="readme_assets/paths_plot_overlayed.png" width="600" height="450"/>
 </p>
 
 ## Resources
