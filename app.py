@@ -26,14 +26,14 @@ def start_people_pathing(args):
             overlay_image_path = arg
 
     pp = PeoplePathing()
-    paths = pp.get_paths(args[1],
-                         num_frames=num_frames,
-                         show_detection=show_detection,
-                         silent=silent)
+    image_size, paths = pp.get_paths(args[1],
+                                     num_frames=num_frames,
+                                     show_detection=show_detection,
+                                     silent=silent)
     if overlay_image_path:
-        pp.plot_object_paths_on_image(paths, overlay_image_path)
+        pp.plot_paths_on_image(image_size, paths, overlay_image_path)
     else:
-        pp.plot_object_paths(paths)
+        pp.plot_paths(image_size, paths)
 
 
 if __name__ == '__main__':

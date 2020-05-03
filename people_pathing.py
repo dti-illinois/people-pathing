@@ -3,7 +3,7 @@ People Pathing
 
 Author: Rishi Masand 2020
 
-Adapted from the following resource
+Detection and tracking adapted from the following resource
 Title: Object Detection and Tracking
 Author: Chris Fotache
 Link: https://towardsdatascience.com/object-detection-and-tracking-in-pytorch-b3cf1a696a98)
@@ -30,7 +30,7 @@ class PeoplePathing():
     '''
     People Pathing
 
-    Derives paths of people moving in a video
+    Determines paths of multiple people moving in a video
     '''
     config_path = 'config/yolov3.cfg'
     weights_path = 'config/yolov3.weights'
@@ -46,7 +46,7 @@ class PeoplePathing():
         self.classes = load_classes(self.class_path)
         self.tensor = torch.FloatTensor
 
-    def _get_image_objects(self, img):
+    def _detect_image_objects(self, img):
         '''Detects objects in image'''
 
         # Scale and pad image
@@ -80,29 +80,39 @@ class PeoplePathing():
                   show_detection=False, silent=False):
         '''Gets paths of objects in video'''
 
+        # get video
+        video = cv2.VideoCapture(video_file_name)
+
+        # determine number of frames to process
+        frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+        if num_frames:
+            frame_count = min(frame_count, num_frames)
+
+        # get set of colors for bounding boxes
         cmap = plt.get_cmap('tab20b')
         colors = [cmap(i)[:3] for i in np.linspace(0, 1, 20)]
 
-        vid = cv2.VideoCapture(video_file_name)
-        if num_frames:
-            num_frames = min(int(vid.get(cv2.CAP_PROP_FRAME_COUNT)), num_frames)
-        else:
-            num_frames = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
-        mot_tracker = Sort()
+        # keep track of people between frames and their paths
+        tracker = Sort()
+        measured_paths = {}
 
-        object_paths = {}
         if not silent:
-            print('Processing ' + str(num_frames) + ' frames.')
-        for frame_idx in range(num_frames):
+            print('Processing ' + str(frame_count) + ' frames.')
+
+        # process frames one at a time
+        for frame_idx in range(frame_count):
             if not silent:
                 print('Processing frame: ' + str(frame_idx))
 
-            _, frame = vid.read()
+            # get frame image
+            _, frame = video.read()
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
             pilimg = Image.fromarray(frame)
-            objects = self._get_image_objects(pilimg)
 
+            # get objects detected in image
+            objects = self._detect_image_objects(pilimg)
+
+            # calculate image paddings used by object detector
             img = np.array(pilimg)
             pad_x = max(img.shape[0] - img.shape[1], 0) * \
                 (self.img_size / max(img.shape))
@@ -110,67 +120,106 @@ class PeoplePathing():
                 (self.img_size / max(img.shape))
             unpad_h = self.img_size - pad_y
             unpad_w = self.img_size - pad_x
-            if objects is not None:
-                tracked_objects = mot_tracker.update(objects.cpu())
 
-                for x_1, y_1, x_2, y_2, obj_id, cls_pred in tracked_objects:
-                    if obj_id in object_paths:
-                        object_paths[obj_id].append(
-                            (abs((x_2 + x_1) / 2), abs((y_2 + y_1) / 2)))
-                    else:
-                        object_paths[obj_id] = [(abs((x_2 + x_1) / 2),
-                                                 abs((y_2 + y_1) / 2))]
+            # process next frame if no objects detected
+            if objects is None:
+                # show frame if necessary
+                if show_detection:
+                    plt.figure(figsize=(12, 8))
+                    plt.title('Frame')
+                    plt.imshow(frame)
+                    plt.show(block=False)
+                    plt.pause(0.1)
+                    plt.close()
+                continue
 
-                    if show_detection:
-                        box_h = int(((y_2 - y_1) / unpad_h) * img.shape[0])
-                        box_w = int(((x_2 - x_1) / unpad_w) * img.shape[1])
-                        y_1 = int(((y_1 - pad_y // 2) / unpad_h) *
-                                  img.shape[0])
-                        x_1 = int(((x_1 - pad_x // 2) / unpad_w) *
-                                  img.shape[1])
+            # update object tracker
+            tracked_objects = tracker.update(objects.cpu())
 
-                        color = colors[int(obj_id) % len(colors)]
-                        color = [i * 255 for i in color]
-                        cls = self.classes[int(cls_pred)]
-                        cv2.rectangle(frame,
-                                      (x_1, y_1),
-                                      (x_1 + box_w, y_1 + box_h),
-                                      color, 4)
-                        cv2.rectangle(frame,
-                                      (x_1, y_1 - 35),
-                                      (x_1 + len(cls) * 19 + 60, y_1),
-                                      color, -1)
-                        cv2.putText(frame,
-                                    cls + '-' + str(int(obj_id)),
-                                    (x_1, y_1 - 10),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 1,
-                                    (255, 255, 255), 3)
+            for x_1, y_1, x_2, y_2, obj_id, pred_class in tracked_objects:
+                # verify that object is person
+                if self.classes[int(pred_class)] != 'person':
+                    continue
+
+                # get bounding box frame
+                box_h = int(((y_2 - y_1) / unpad_h) * img.shape[0])
+                box_w = int(((x_2 - x_1) / unpad_w) * img.shape[1])
+                y_1 = int(((y_1 - pad_y // 2) / unpad_h) *
+                          img.shape[0])
+                x_1 = int(((x_1 - pad_x // 2) / unpad_w) *
+                          img.shape[1])
+
+                # update measured path (tracking at mid-bottom of box)
+                mid_x = x_1 + box_w / 2
+                bottom_y = y_1 + box_h
+                if obj_id in measured_paths:
+                    measured_paths[obj_id].append((mid_x, bottom_y))
+                else:
+                    measured_paths[obj_id] = [(mid_x, bottom_y)]
+
+                # only draw on frame if being shown
+                if not show_detection:
+                    continue
+                # get color for object
+                color = colors[int(obj_id) % len(colors)]
+                color = [i * 255 for i in color]
+
+                # get class name
+                class_name = self.classes[int(pred_class)]
+
+                # draw bounding box
+                cv2.rectangle(frame,
+                              (x_1, y_1),
+                              (x_1 + box_w, y_1 + box_h),
+                              color, 4)
+
+                # draw object label
+                cv2.rectangle(frame,
+                              (x_1, y_1 - 35),
+                              (x_1 + len(class_name) * 19 + 60, y_1),
+                              color, -1)
+                cv2.putText(frame,
+                            class_name + '-' + str(int(obj_id)),
+                            (x_1, y_1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1,
+                            (255, 255, 255), 3)
+
+            # show frame if necessary
             if show_detection:
                 plt.figure(figsize=(12, 8))
                 plt.title('Video Stream')
                 plt.imshow(frame)
                 plt.show(block=False)
-                plt.pause(0.25)
+                plt.pause(0.1)
                 plt.close()
-        return object_paths
 
-    def plot_object_paths(self, object_paths):
-        '''Plots object paths'''
+        image_size = (img.shape[1], img.shape[0])
+        return (image_size, measured_paths)
 
-        for object_id in object_paths:
-            object_path = object_paths[object_id]
-            x_path, y_path = [list(t) for t in zip(*object_path)]
+    def plot_paths(self, image_size, paths):
+        '''Plots paths'''
+
+        # configure plot as per image size
+        plt.figure(figsize=(12, 8))
+        plt.xlim(0, image_size[0])
+        plt.ylim(image_size[1], 0)
+
+        for object_id in paths:
+            path = paths[object_id]
+            x_path, y_path = [list(t) for t in zip(*path)]
             plt.plot(x_path, y_path)
         plt.show()
 
-    def plot_object_paths_on_image(self, object_paths, image_file_name):
+    def plot_paths_on_image(self, image_size, paths, image_file_name):
         '''Plots object paths on image'''
 
         _, a_x = plt.subplots()
         img = plt.imread(image_file_name)
-        a_x.imshow(img, extent=[0, 610, 0, 340])
-        for object_id in object_paths:
-            object_path = object_paths[object_id]
-            x_path, y_path = [list(t) for t in zip(*object_path)]
+        plt.xlim(0, image_size[0])
+        plt.ylim(image_size[1], 0)
+        a_x.imshow(img, extent=[0, 610, 340, 0])
+        for object_id in paths:
+            path = paths[object_id]
+            x_path, y_path = [list(t) for t in zip(*path)]
             a_x.plot(x_path, y_path)
         plt.show()
