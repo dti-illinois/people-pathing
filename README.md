@@ -1,7 +1,6 @@
 # people-pathing
 
 ![python (scoped)](https://img.shields.io/badge/python-%3E%3D3.7.6-brightgreen.svg)
-![python (scoped)](https://img.shields.io/badge/pip-%3E%3D20.0.2-brightgreen.svg)
 
 ## Description
 `people-pathing` detects and tracks paths of multiple people in a video. `people-pathing` leverages [YOLO](https://arxiv.org/abs/1506.02640) for object detection (detecting people in each frame) and [SORT](https://arxiv.org/abs/1602.00763) for object tracking (tracking people between frames). `people-pathing` generates plots of paths traversed by people in the video.
