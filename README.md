@@ -6,11 +6,9 @@
 `people-pathing` detects and tracks paths of multiple people in a video. `people-pathing` leverages [YOLO](https://arxiv.org/abs/1506.02640) for object detection (detecting people in each frame) and [SORT](https://arxiv.org/abs/1602.00763) for object tracking (tracking people between frames). `people-pathing` generates plots of paths traversed by people in the video.
 
 ## Usage
+
+### Configuration
 To use, ensure you have `PyTorch` and `OpenCV` installed in your environment.
-
-Install the dependencies with the following command.
-
-`pip install -r requirements.txt`
 
 The YOLO model requires the `config` directory in your project directory have the following files, which can be found via [this link](https://pjreddie.com/darknet/yolo/).
 
@@ -22,6 +20,14 @@ config
 +-- yolov3.weights
 ```
 
+### Installation
+
+Install the dependencies with the following command.
+
+`pip install -r requirements.txt`
+
+### Execution
+
 To run `people-pathing`, use the following command.
 
 `python app.py video_file_path [overlay_image_path] [-n=num_frames] [-s, --silent] [-d, --detection]`
@@ -29,9 +35,13 @@ To run `people-pathing`, use the following command.
 where
 
 `video_file_path` is the path to the video file
+
 `overlay_image_path` is the path to the image to overlay the measured paths on (optional, no overlay image by default)
+
 `-n=num_frames` specifies the number of frames of the video to process (optional, all frames processed by default)
+
 `-s, --silent` prevents `STDOUT` output from being displayed (optional, displays `STDOUT` output by default)
+
 `-d, --detection` shows detection frame-by-frame while processing (optional, does not show frame-by-frame detection by default)
 
 For example, the following command runs `people-pathing` on the video file `data/videos/people_walking_mall.mp4` on the first 200 frames of the video with no `STDOUT` output displayed, and frame-by-frame detection shown while processing.
