@@ -44,6 +44,8 @@ where
 
 `-d, --detection` shows detection frame-by-frame while processing (optional, does not show frame-by-frame detection by default)
 
+### Sample Commands
+
 For example, the following command runs `people-pathing` on the video file `data/videos/people_walking_mall.mp4` on the first 200 frames of the video with no `STDOUT` output displayed, and frame-by-frame detection shown while processing.
 
 `python app.py data/videos/people_walking_mall.mp4 -n=200 -s -d`
